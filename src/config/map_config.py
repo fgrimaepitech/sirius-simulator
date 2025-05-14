@@ -20,7 +20,7 @@ COLORS = {
 # Configuration de la grille
 GRID = {
     'enabled': True,
-    'spacing': 50,  # Espacement entre les lignes de la grille en pixels
+    'spacing': 20,  # Espacement entre les lignes de la grille en pixels
     'color': COLORS['grid'],
     'line_width': 1,
 }

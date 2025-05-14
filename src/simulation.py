@@ -163,7 +163,6 @@ def run_simulation():
         info_text = [
             f"Organismes: {len(organisms)}",
             f"Vitesse: {current_speed:.1f} ticks/s",
-            f"Status: {'PAUSED' if is_paused else 'RUNNING'}"
         ]
         
         for i, text in enumerate(info_text):

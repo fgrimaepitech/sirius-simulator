@@ -23,7 +23,7 @@ BUTTONS = {
         'color': (100, 100, 100),
         'hover_color': (150, 150, 150),
         'border_color': MAP_COLORS['text'],
-        'position': (10, 50),
+        'position': (10, 70),
         'rect': pygame.Rect(10, 50, BUTTON_WIDTH, BUTTON_HEIGHT)
     },
     'fast': {
@@ -31,7 +31,7 @@ BUTTONS = {
         'color': (100, 100, 100),
         'hover_color': (150, 150, 150),
         'border_color': MAP_COLORS['text'],
-        'position': (10 + BUTTON_WIDTH + BUTTON_SPACING, 50),
+        'position': (10 + BUTTON_WIDTH + BUTTON_SPACING, 70),
         'rect': pygame.Rect(10 + BUTTON_WIDTH + BUTTON_SPACING, 50, BUTTON_WIDTH, BUTTON_HEIGHT)
     },
     'reload': {
@@ -39,7 +39,7 @@ BUTTONS = {
         'color': (100, 100, 100),
         'hover_color': (150, 150, 150),
         'border_color': MAP_COLORS['text'],
-        'position': (10 + (BUTTON_WIDTH + BUTTON_SPACING) * 2, 50),
+        'position': (10 + (BUTTON_WIDTH + BUTTON_SPACING) * 2, 70),
         'rect': pygame.Rect(10 + (BUTTON_WIDTH + BUTTON_SPACING) * 2, 50, BUTTON_WIDTH, BUTTON_HEIGHT)
     },
     'pause': {
@@ -47,7 +47,7 @@ BUTTONS = {
         'color': (100, 100, 100),
         'hover_color': (150, 150, 150),
         'border_color': MAP_COLORS['text'],
-        'position': (10 + (BUTTON_WIDTH + BUTTON_SPACING) * 3, 50),
+        'position': (10 + (BUTTON_WIDTH + BUTTON_SPACING) * 3, 70),
         'rect': pygame.Rect(10 + (BUTTON_WIDTH + BUTTON_SPACING) * 3, 50, BUTTON_WIDTH, BUTTON_HEIGHT)
     }
 }
