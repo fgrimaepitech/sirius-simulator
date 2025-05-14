@@ -1,5 +1,8 @@
 # Sirius Simulator
 
+![SiriusCover](https://github.com/user-attachments/assets/86ddda1d-29e2-4d82-81ec-a2e306a5ed3c)
+
+
 ## Installation
 
 1. Créer un environnement virtuel Python :
