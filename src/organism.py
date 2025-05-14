@@ -28,15 +28,17 @@ def random_color():
     )
 
 class Organism:
-    def __init__(self, x, y, color=None, id="LUCA"):
+    def __init__(self, x, y, color=None, id="LUCA", genealogy_id=None, parent_id=None):
         self.x = x
         self.y = y
         self.age = 0
         self.reproduction_time = random.randint(20, 100)
+        self.parent_id = parent_id;
         self.id = id
         self.color = color if color else UNITS['default_color']
         self.size = UNITS['default_size']
         self.speed = UNITS['default_speed']
+        self.genealogy_id = genealogy_id  # ID dans l'arbre généalogique
 
     def update(self, organisms, grid):
         """Met à jour l'état de l'organisme"""
@@ -65,10 +67,13 @@ class Organism:
             nx, ny = self.x + dx, self.y + dy
             if self.is_valid_position(nx, ny, grid):
                 # Création d'un nouvel organisme avec des caractéristiques légèrement modifiées
+                child_id = f"{self.id}_child_{len(organisms)}"  # ID unique basé sur le nombre d'organismes
                 child = Organism(
                     nx, ny,
                     color=self.mutate_color(),
-                    id=f"{self.id}_child"
+                    id=child_id,
+                    genealogy_id=None,  # Sera défini lors de l'ajout à la généalogie
+                    parent_id=self.id
                 )
                 organisms.append(child)
                 grid[ny, nx] = CELL  # Utilisation de la notation numpy

@@ -16,3 +16,8 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db 
+
+# Data
+src/data/species/*.json
+src/data/species/*.dot
+src/data/species/*.png

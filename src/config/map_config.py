@@ -57,7 +57,7 @@ CAMERA = {
 UNITS = {
     'default_speed': 1.0,  # mètres par seconde
     'default_size': 10,    # pixels
-    'default_color': (0, 255, 0),  # Vert
+    'default_color': (255, 255, 0) # jaune pck pourquoi pas
 }
 
 def get_map_dimensions():

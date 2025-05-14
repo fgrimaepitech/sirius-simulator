@@ -6,154 +6,176 @@ import numpy as np
 import os
 from config.map_config import (
     get_map_dimensions,
-    get_grid_config,
-    COLORS as MAP_COLORS,
-    GRID
+    get_units_config,
+    UNITS,
 )
-from config.simulation_config import (
-    SPEED_CONFIG, ENTITY_COLORS, EMPTY, CELL,
-)
-from config.ui_config import FONT_PATH, FONTS
-from organism import Organism
-from ui.ui_manager import UIManager
-from config.simulation_config import (
-    GRID_SIZE,
-    TILE_SIZE,
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT,
-    FPS
-)
+from config.simulation_config import ENTITY_COLORS, SPEED_CONFIG
+from config.ui_config import BUTTONS, FONTS, FONT_PATH
+from organism import Organism, EMPTY, CELL
+from data.species.genealogy import Genealogy
 
+# Initialisation de Pygame
+pygame.init()
 
-def load_font(font_name: str, size: int) -> pygame.font.Font:
-    """Charge une police avec gestion des erreurs"""
+# Récupération des dimensions de la map
+MAP_WIDTH, MAP_HEIGHT = get_map_dimensions()
+GRID_SIZE = MAP_WIDTH // UNITS['default_size']
+
+# Configuration de la fenêtre
+screen = pygame.display.set_mode((MAP_WIDTH, MAP_HEIGHT))
+pygame.display.set_caption("Simulation Évolutionnaire")
+
+def load_font(style, size):
+    """Charge une police avec gestion d'erreur"""
     try:
-        font_path = os.path.join(FONT_PATH, FONTS[font_name])
+        font_path = os.path.join(FONT_PATH, FONTS[style])
         return pygame.font.Font(font_path, size)
-    except (FileNotFoundError, KeyError):
-        print(f"Police {font_name} non trouvée, utilisation de la police par défaut")
+    except:
         return pygame.font.Font(None, size)
 
+def draw_button(screen, button_config, mouse_pos):
+    """Dessine un bouton avec effet de survol"""
+    color = button_config['hover_color'] if button_config['rect'].collidepoint(mouse_pos) else button_config['color']
+    pygame.draw.rect(screen, color, button_config['rect'])
+    pygame.draw.rect(screen, button_config['border_color'], button_config['rect'], 2)
+    
+    font = load_font('regular', 16)
+    text = font.render(button_config['text'], True, (255, 255, 255))
+    text_rect = text.get_rect(center=button_config['rect'].center)
+    screen.blit(text, text_rect)
 
 def create_initial_state():
-    """Crée l'état initial avec un seul organisme LUCA"""
-    # Création d'une grille vide avec numpy pour une meilleure gestion des indices
-    grid = np.full((GRID_SIZE, GRID_SIZE), EMPTY, dtype=int)
+    """Crée l'état initial de la simulation avec LUCA"""
+    grid = np.zeros((GRID_SIZE, GRID_SIZE), dtype=int)
     organisms = []
     
     # Création de LUCA au centre de la grille
     center_x = GRID_SIZE // 2
     center_y = GRID_SIZE // 2
-    luca = Organism(center_x, center_y, color=(255, 255, 0), id="LUCA")
+    luca = Organism(center_x, center_y, id="LUCA", genealogy_id="LUCA")
     organisms.append(luca)
-    grid[center_y][center_x] = CELL
-  
+    grid[center_y, center_x] = CELL
+    
     return grid, organisms
 
-def draw_button(screen: pygame.Surface, button: dict, mouse_pos: tuple):
-    """Dessine un bouton avec effet de survol"""
-    color = button['hover_color'] if button['rect'].collidepoint(mouse_pos) else button['color']
-    pygame.draw.rect(screen, color, button['rect'])
-    pygame.draw.rect(screen, MAP_COLORS['text'], button['rect'], 2)
-    
-    font = load_font('regular', 16)  # Taille réduite pour la police pixelisée
-    text = font.render(button['text'], True, MAP_COLORS['text'])
-    text_rect = text.get_rect(center=button['rect'].center)
-    screen.blit(text, text_rect)
+def reset_simulation():
+    """Réinitialise la simulation"""
+    return create_initial_state()
 
 def run_simulation():
-    # Initialisation de la simulation
+    """Boucle principale de la simulation"""
     grid, organisms = create_initial_state()
+    genealogy = Genealogy()
+    genealogy.load_data()
+    
+    # Ajout de LUCA à la généalogie
+    luca = organisms[0]
+    genealogy.add_organism(luca, None)
+    
+    clock = pygame.time.Clock()
+    running = True
     current_speed = SPEED_CONFIG['default']
     tick_counter = 0
     is_paused = False
-    
-    # Initialisation de l'interface
-    ui_manager = UIManager()
-    
-    # Boucle principale
-    running = True
-    clock = pygame.time.Clock()
+
+    # supprime les fichiers data
+    if os.path.exists(os.path.join('src', 'data', 'species', 'genealogy.json')):
+        os.remove(os.path.join('src', 'data', 'species', 'genealogy.json'))
+    if os.path.exists(os.path.join('src', 'data', 'species', 'genealogy.dot')):
+        os.remove(os.path.join('src', 'data', 'species', 'genealogy.dot'))
+    if os.path.exists(os.path.join('src', 'data', 'species', 'genealogy.png')):
+        os.remove(os.path.join('src', 'data', 'species', 'genealogy.png'))
     
     while running:
-        # Gestion des événements
+        mouse_pos = pygame.mouse.get_pos()
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            
-            # Gestion des boutons
-            button_id = ui_manager.handle_event(event)
-            if button_id == 'slow':
-                current_speed = max(SPEED_CONFIG['min'], current_speed - SPEED_CONFIG['step'])
-            elif button_id == 'fast':
-                current_speed = min(SPEED_CONFIG['max'], current_speed + SPEED_CONFIG['step'])
-            elif button_id == 'reload':
-                grid, organisms = create_initial_state()
-                current_speed = SPEED_CONFIG['default']
-                tick_counter = 0
-                is_paused = False
-            elif button_id == 'pause':
-                is_paused = not is_paused
-                # Mise à jour du texte du bouton
-                ui_manager.buttons['pause'].text = "RESUME" if is_paused else "PAUSE"
-                ui_manager.buttons['pause'].text_surface = ui_manager.buttons['pause'].font.render(
-                    ui_manager.buttons['pause'].text, True, (255, 255, 255)
-                )
-            
-            # Touche R pour recharger
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                grid, organisms = create_initial_state()
-                current_speed = SPEED_CONFIG['default']
-                tick_counter = 0
-                is_paused = False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                # Gestion des boutons
+                for button_id, button_config in BUTTONS.items():
+                    if button_config['rect'].collidepoint(mouse_pos):
+                        if button_id == 'slow':
+                            current_speed = max(SPEED_CONFIG['min'], 
+                                             current_speed - SPEED_CONFIG['step'])
+                        elif button_id == 'fast':
+                            current_speed = min(SPEED_CONFIG['max'], 
+                                             current_speed + SPEED_CONFIG['step'])
+                        elif button_id == 'reload':
+                            grid, organisms = reset_simulation()
+                            genealogy = Genealogy()
+                            genealogy.load_data()
+                            genealogy.add_organism("LUCA", None, "LUCA")
+                        elif button_id == 'pause':
+                            is_paused = not is_paused
+                            button_config['text'] = "RESUME" if is_paused else "PAUSE"
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_r:
+                    grid, organisms = reset_simulation()
+                    genealogy = Genealogy()
+                    genealogy.load_data()
+                    genealogy.add_organism("LUCA", None, "LUCA")
+                elif event.key == pygame.K_SPACE:
+                    is_paused = not is_paused
+                    BUTTONS['pause']['text'] = "RESUME" if is_paused else "PAUSE"
         
         # Mise à jour de la simulation
         if not is_paused:
             tick_counter += current_speed
-            if tick_counter >= 1.0:
+            if tick_counter >= 1:
                 tick_counter = 0
-                
-                # Mise à jour des organismes
-                for org in organisms:
-                    org.update(organisms, grid)
-                    org.move(grid)  # Ajout du mouvement
+                for organism in organisms[:]:
+                    organism.move(grid)
+                    organism.update(organisms, grid)
+                    
+                    # Si l'organisme vient de se reproduire, l'ajouter à la généalogie
+                    if organism.genealogy_id is None:
+                        # Le parent est l'organisme qui vient de se reproduire
+                        parent = next((o for o in organisms if o.id == organism.id.split('_')[0] and o.genealogy_id is not None), None)
+                        if parent:
+                            genealogy.add_organism(organism, parent.id)
+                            organism.genealogy_id = organism.id
         
-        # Mise à jour de l'interface
-        ui_manager.update_text('title', f"ORGANISMES: {len(organisms)}")
-        ui_manager.update_text('speed', f"VITESSE: {current_speed:.1f} ticks/s")
-        ui_manager.update_text('status', "PAUSED" if is_paused else "RUNNING")
+        # Rendu
+        screen.fill((0, 0, 0))
         
-        # Dessin
-        screen.fill(MAP_COLORS['background'])
-        
-        # Dessiner la grille
-        if GRID['enabled']:
-            for x in range(0, SCREEN_WIDTH, GRID['spacing']):
-                pygame.draw.line(screen, GRID['color'], (x, 0), (x, SCREEN_HEIGHT), GRID['line_width'])
-            for y in range(0, SCREEN_HEIGHT, GRID['spacing']):
-                pygame.draw.line(screen, GRID['color'], (0, y), (SCREEN_WIDTH, y), GRID['line_width'])
-        
-        # Dessiner les organismes
+        # Dessin de la grille
         for y in range(GRID_SIZE):
             for x in range(GRID_SIZE):
-                rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                pygame.draw.rect(screen, ENTITY_COLORS["empty"], rect)
-                pygame.draw.rect(screen, MAP_COLORS['grid'], rect, 1)
+                color = ENTITY_COLORS["empty"]
+                if grid[y, x] == CELL:
+                    organism = next((o for o in organisms if o.x == x and o.y == y), None)
+                    if organism:
+                        color = organism.color
+                pygame.draw.rect(screen, color, 
+                               (x * UNITS['default_size'], 
+                                y * UNITS['default_size'],
+                                UNITS['default_size'], 
+                                UNITS['default_size']))
         
-        for org in organisms:
-            rect = pygame.Rect(org.x * TILE_SIZE, org.y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            pygame.draw.rect(screen, org.color, rect)
+        # Dessin des boutons
+        for button_config in BUTTONS.values():
+            draw_button(screen, button_config, mouse_pos)
         
-        # Dessiner l'interface
-        ui_manager.draw(screen)
+        # Affichage des informations
+        font = load_font('regular', 16)
+        info_text = [
+            f"Organismes: {len(organisms)}",
+            f"Vitesse: {current_speed:.1f} ticks/s",
+            f"Status: {'PAUSED' if is_paused else 'RUNNING'}"
+        ]
+        
+        for i, text in enumerate(info_text):
+            text_surface = font.render(text, True, (255, 255, 255))
+            screen.blit(text_surface, (10, 10 + i * 25))
         
         pygame.display.flip()
-        clock.tick(FPS)
+        clock.tick(60)
     
+    # Sauvegarde de la généalogie avant de quitter
+    genealogy.save_data()
     pygame.quit()
 
 if __name__ == "__main__":
-    pygame.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Simulation de Vie - LUCA")
     run_simulation()
