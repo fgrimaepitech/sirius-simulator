@@ -23,3 +23,4 @@ pip install -r requirements.txt
 - Python 3.11+
 - Pygame 2.5.2
 - NumPy 1.26.4 
+- Matplotlib 3.10.0
