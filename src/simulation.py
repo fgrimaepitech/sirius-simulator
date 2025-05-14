@@ -46,7 +46,7 @@ def create_initial_state():
     luca = Organism(center_x, center_y, color=(255, 255, 0), id="LUCA")
     organisms.append(luca)
     grid[center_y][center_x] = CELL
-    
+  
     return grid, organisms
 
 def draw_button(screen: pygame.Surface, button: dict, mouse_pos: tuple):
@@ -93,7 +93,6 @@ def run_simulation():
             # Touche R pour recharger
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 grid, organisms = create_initial_state()
-                print(f"Organisms: {organisms}")
                 current_speed = SPEED_CONFIG['default']
                 tick_counter = 0
         
@@ -103,16 +102,9 @@ def run_simulation():
             tick_counter = 0
             
             # Mise à jour des organismes
-            new_organisms = []
             for org in organisms:
                 org.update(organisms, grid)
-                if org.energy > 0:
-                    new_organisms.append(org)
-                    if org.energy >= 100:
-                        new_org = org.reproduce()
-                        if new_org:
-                            new_organisms.append(new_org)
-            organisms = new_organisms
+                org.move(grid)  # Ajout du mouvement
         
         # Mise à jour de l'interface
         ui_manager.update_text('title', f"ORGANISMES: {len(organisms)}")
