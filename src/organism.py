@@ -1,4 +1,8 @@
+"""
+Classe pour gérer les organismes
+"""
 import random
+import numpy as np
 from config.map_config import (
     get_map_dimensions,
     get_units_config,
@@ -59,7 +63,7 @@ class Organism:
         
         for dx, dy in directions:
             nx, ny = self.x + dx, self.y + dy
-            if 0 <= nx < GRID_SIZE and 0 <= ny < GRID_SIZE and grid[ny][nx] == EMPTY:
+            if self.is_valid_position(nx, ny, grid):
                 # Création d'un nouvel organisme avec des caractéristiques légèrement modifiées
                 child = Organism(
                     nx, ny,
@@ -67,7 +71,7 @@ class Organism:
                     id=f"{self.id}_child"
                 )
                 organisms.append(child)
-                grid[ny][nx] = CELL
+                grid[ny, nx] = CELL  # Utilisation de la notation numpy
                 break
 
     def mutate_color(self):
@@ -79,6 +83,15 @@ class Organism:
             max(0, min(255, b + random.randint(-20, 20)))
         )
 
+    def is_valid_position(self, x, y, grid):
+        """Vérifie si une position est valide dans la grille"""
+        try:
+            return (0 <= x < GRID_SIZE and 
+                    0 <= y < GRID_SIZE and 
+                    grid[y, x] == EMPTY)  # Utilisation de la notation numpy
+        except IndexError:
+            return False
+
     def move(self, grid):
         """Déplace l'organisme dans une direction aléatoire"""
         if random.random() < self.speed:  # Probabilité de mouvement basée sur la vitesse
@@ -87,8 +100,8 @@ class Organism:
             
             for dx, dy in directions:
                 nx, ny = self.x + dx, self.y + dy
-                if 0 <= nx < GRID_SIZE and 0 <= ny < GRID_SIZE and grid[ny][nx] == EMPTY:
-                    grid[self.y][self.x] = EMPTY
+                if self.is_valid_position(nx, ny, grid):
+                    grid[self.y, self.x] = EMPTY  # Utilisation de la notation numpy
                     self.x, self.y = nx, ny
-                    grid[ny][nx] = CELL
+                    grid[ny, nx] = CELL  # Utilisation de la notation numpy
                     break

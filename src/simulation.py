@@ -37,7 +37,8 @@ def load_font(font_name: str, size: int) -> pygame.font.Font:
 
 def create_initial_state():
     """Crée l'état initial avec un seul organisme LUCA"""
-    grid = [[EMPTY for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
+    # Création d'une grille vide avec numpy pour une meilleure gestion des indices
+    grid = np.full((GRID_SIZE, GRID_SIZE), EMPTY, dtype=int)
     organisms = []
     
     # Création de LUCA au centre de la grille
@@ -65,6 +66,7 @@ def run_simulation():
     grid, organisms = create_initial_state()
     current_speed = SPEED_CONFIG['default']
     tick_counter = 0
+    is_paused = False
     
     # Initialisation de l'interface
     ui_manager = UIManager()
@@ -89,26 +91,37 @@ def run_simulation():
                 grid, organisms = create_initial_state()
                 current_speed = SPEED_CONFIG['default']
                 tick_counter = 0
+                is_paused = False
+            elif button_id == 'pause':
+                is_paused = not is_paused
+                # Mise à jour du texte du bouton
+                ui_manager.buttons['pause'].text = "RESUME" if is_paused else "PAUSE"
+                ui_manager.buttons['pause'].text_surface = ui_manager.buttons['pause'].font.render(
+                    ui_manager.buttons['pause'].text, True, (255, 255, 255)
+                )
             
             # Touche R pour recharger
             if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 grid, organisms = create_initial_state()
                 current_speed = SPEED_CONFIG['default']
                 tick_counter = 0
+                is_paused = False
         
         # Mise à jour de la simulation
-        tick_counter += current_speed
-        if tick_counter >= 1.0:
-            tick_counter = 0
-            
-            # Mise à jour des organismes
-            for org in organisms:
-                org.update(organisms, grid)
-                org.move(grid)  # Ajout du mouvement
+        if not is_paused:
+            tick_counter += current_speed
+            if tick_counter >= 1.0:
+                tick_counter = 0
+                
+                # Mise à jour des organismes
+                for org in organisms:
+                    org.update(organisms, grid)
+                    org.move(grid)  # Ajout du mouvement
         
         # Mise à jour de l'interface
         ui_manager.update_text('title', f"ORGANISMES: {len(organisms)}")
         ui_manager.update_text('speed', f"VITESSE: {current_speed:.1f} ticks/s")
+        ui_manager.update_text('status', "PAUSED" if is_paused else "RUNNING")
         
         # Dessin
         screen.fill(MAP_COLORS['background'])

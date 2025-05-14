@@ -33,6 +33,13 @@ BUTTONS = {
         'hover_color': (150, 150, 150),
         'border_color': MAP_COLORS['text'],
         'position': (270, 50)
+    },
+    'pause': {
+        'text': "PAUSE",
+        'color': (100, 100, 100),
+        'hover_color': (150, 150, 150),
+        'border_color': MAP_COLORS['text'],
+        'position': (400, 50)
     }
 }
 
@@ -45,6 +52,11 @@ TEXTS = {
     'speed': {
         'text': "VITESSE: {:.1f} ticks/s",
         'position': (10, 100),
+        'color': MAP_COLORS['text']
+    },
+    'status': {
+        'text': "STATUS: {}",
+        'position': (10, 150),
         'color': MAP_COLORS['text']
     }
 } 
